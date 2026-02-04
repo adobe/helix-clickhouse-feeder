@@ -42,6 +42,8 @@ export function Nock() {
     return scope.post('/api/v2/logs');
   };
 
+  nocker.clickhouse = ({ host = 'ch.example.cloud' } = {}) => nocker(`https://${host}:8443`).post(/.*/);
+
   nocker.done = () => {
     Object.values(scopes).forEach((s) => s.done());
     if (unmatched) {

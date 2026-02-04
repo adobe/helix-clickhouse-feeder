@@ -14,10 +14,9 @@
 
 import { promisify } from 'node:util';
 import { gzip } from 'node:zlib';
-import wrapFetch from 'fetch-retry';
-import { FetchError, Request } from '@adobe/fetch';
+import { Request } from '@adobe/fetch';
 import { extractFields } from './extract-fields.js';
-import { fetchContext } from './utils.js';
+import { createFetchRetry } from './utils.js';
 
 const gzipAsync = promisify(gzip);
 
@@ -41,35 +40,7 @@ const LOG_LEVELS = [
   'TRACE', 'SILLY', 'DEBUG', 'VERBOSE', 'INFO', 'WARN', 'ERROR',
 ];
 
-const { fetch } = fetchContext;
-
-const MOCHA_ENV = (process.env.HELIX_FETCH_FORCE_HTTP1 === 'true');
-
-/**
- * Wrapped fetch that retries on certain conditions.
- */
-const fetchRetry = wrapFetch(fetch, {
-  retryDelay: (attempt) => {
-    if (MOCHA_ENV) {
-      return 1;
-    }
-    /* c8 ignore next */
-    return (2 ** attempt * 1000); // 1000, 2000, 4000
-  },
-  retryOn: async (attempt, error, response) => {
-    const retries = MOCHA_ENV ? 1 /* c8 ignore next */ : 2;
-    if (error) {
-      if (error instanceof FetchError) {
-        return attempt < retries;
-      }
-      throw error;
-    }
-    if (!response.ok) {
-      throw new Error(`Failed to send logs with status ${response.status}: ${await response.text()}`);
-    }
-    return false;
-  },
-});
+const fetchRetry = createFetchRetry('DataDog');
 
 /**
  * DataDog logger.
