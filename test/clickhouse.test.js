@@ -72,6 +72,35 @@ describe('ClickHouse Tests', () => {
     );
   });
 
+  it('accepts non-numeric timestamps and converts to epoch millis', async () => {
+    nock.clickhouse()
+      .reply((_, body) => {
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const entry = JSON.parse(raw.trim());
+        assert.strictEqual(entry.timestamp, 1668084827204);
+        assert.strictEqual(typeof entry.timestamp, 'number');
+        return [200];
+      });
+
+    const logger = new ClickHouseLogger({
+      host: 'ch.example.cloud',
+      user: 'writer',
+      password: 'secret',
+      funcName: '/services/func/v1',
+      appName: 'app',
+    });
+    await assert.doesNotReject(
+      async () => logger.sendEntries([
+        {
+          timestamp: '2022-11-10T12:53:47.204Z',
+          extractedFields: {
+            event: 'INFO\tstring timestamp\n',
+          },
+        },
+      ]),
+    );
+  });
+
   it('uses Basic Auth header and async_insert query parameters', async () => {
     const expectedAuth = `Basic ${Buffer.from('writer:secret').toString('base64')}`;
     nock.clickhouse()
