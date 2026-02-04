@@ -41,8 +41,9 @@ describe('ClickHouse Tests', () => {
         assert.strictEqual(entry.subsystem, 'services');
         assert.strictEqual(entry.log_stream, 'my-stream');
         assert.strictEqual(entry.log_group, '/aws/lambda/services--func');
-        // timestamp should be ISO 8601
-        assert.ok(entry.timestamp.endsWith('Z'));
+        // timestamp should be epoch milliseconds
+        assert.strictEqual(entry.timestamp, date.getTime());
+        assert.strictEqual(typeof entry.timestamp, 'number');
         // severity should NOT be in the entry
         assert.strictEqual(entry.severity, undefined);
         return [200];
