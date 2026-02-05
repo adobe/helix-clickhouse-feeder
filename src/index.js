@@ -13,6 +13,7 @@ import util from 'util';
 import zlib from 'zlib';
 import { Response } from '@adobe/fetch';
 import wrap from '@adobe/helix-shared-wrap';
+import secrets from '@adobe/helix-shared-secrets';
 import { helixStatus } from '@adobe/helix-status';
 import { DataDogLogger } from './datadog.js';
 import { ClickHouseLogger } from './clickhouse.js';
@@ -166,4 +167,5 @@ async function run(request, context) {
 }
 
 export const main = wrap(run)
+  .with(secrets)
   .with(helixStatus);
