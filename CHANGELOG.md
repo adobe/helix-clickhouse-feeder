@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/adobe/helix-datadog-feeder/compare/v1.1.1...v1.2.0) (2026-02-05)
+
+
+### Features
+
+* add secrets ([#4](https://github.com/adobe/helix-datadog-feeder/issues/4)) ([9c0c5ea](https://github.com/adobe/helix-datadog-feeder/commit/9c0c5ea3fa4b35807cda44452821d161c16439d4))
+
 ## [1.1.1](https://github.com/adobe/helix-datadog-feeder/compare/v1.1.0...v1.1.1) (2026-02-05)
 
 
