@@ -19,7 +19,7 @@ import { LOG_LEVEL_MAPPING } from './constants.js';
 
 /**
  * @typedef ClickHouseLogEntry
- * @property {string} timestamp ISO 8601 timestamp
+ * @property {number} timestamp epoch milliseconds
  * @property {string} level log level (lowercase)
  * @property {string} message log message
  * @property {string} request_id Lambda request id
@@ -100,8 +100,12 @@ export class ClickHouseLogger {
     }
     const { level, message, requestId } = fields;
 
+    const epochMillis = Number.isFinite(timestamp)
+      ? timestamp
+      : new Date(timestamp).getTime();
+
     return {
-      timestamp: new Date(timestamp).toISOString(),
+      timestamp: epochMillis,
       level: level.toLowerCase(),
       message: message.trimEnd(),
       request_id: requestId || '',

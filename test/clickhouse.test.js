@@ -41,8 +41,9 @@ describe('ClickHouse Tests', () => {
         assert.strictEqual(entry.subsystem, 'services');
         assert.strictEqual(entry.log_stream, 'my-stream');
         assert.strictEqual(entry.log_group, '/aws/lambda/services--func');
-        // timestamp should be ISO 8601
-        assert.ok(entry.timestamp.endsWith('Z'));
+        // timestamp should be epoch milliseconds
+        assert.strictEqual(entry.timestamp, date.getTime());
+        assert.strictEqual(typeof entry.timestamp, 'number');
         // severity should NOT be in the entry
         assert.strictEqual(entry.severity, undefined);
         return [200];
@@ -65,6 +66,35 @@ describe('ClickHouse Tests', () => {
           extractedFields: {
             event: 'INFO\thello world\n',
             request_id: 'd12ddc0c-1f6b-51d7-be22-83b52c83d6da',
+          },
+        },
+      ]),
+    );
+  });
+
+  it('accepts non-numeric timestamps and converts to epoch millis', async () => {
+    nock.clickhouse()
+      .reply((_, body) => {
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const entry = JSON.parse(raw.trim());
+        assert.strictEqual(entry.timestamp, 1668084827204);
+        assert.strictEqual(typeof entry.timestamp, 'number');
+        return [200];
+      });
+
+    const logger = new ClickHouseLogger({
+      host: 'ch.example.cloud',
+      user: 'writer',
+      password: 'secret',
+      funcName: '/services/func/v1',
+      appName: 'app',
+    });
+    await assert.doesNotReject(
+      async () => logger.sendEntries([
+        {
+          timestamp: '2022-11-10T12:53:47.204Z',
+          extractedFields: {
+            event: 'INFO\tstring timestamp\n',
           },
         },
       ]),
