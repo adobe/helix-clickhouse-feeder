@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/adobe/helix-datadog-feeder/compare/v1.1.0...v1.1.1) (2026-02-05)
+
+
+### Bug Fixes
+
+* clickhouse epoch timestamp ([#5](https://github.com/adobe/helix-datadog-feeder/issues/5)) ([8b48da7](https://github.com/adobe/helix-datadog-feeder/commit/8b48da7bc893c2f19dfa322f2af462711c3b4285))
+
 # [1.1.0](https://github.com/adobe/helix-datadog-feeder/compare/v1.0.1...v1.1.0) (2026-02-04)
 
 
