@@ -18,7 +18,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Use Node.js 24.x
         uses: actions/setup-node@v6
         with:
@@ -35,7 +35,7 @@ jobs:
     if: github.ref != 'refs/heads/main'
     needs: test
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Use Node.js 24.x
         uses: actions/setup-node@v6
         with:
@@ -43,7 +43,7 @@ jobs:
       - run: npm install
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE }}
@@ -70,7 +70,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: test
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Use Node.js 24.x
         uses: actions/setup-node@v6
         with:
@@ -78,7 +78,7 @@ jobs:
       - run: npm install
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE }}
