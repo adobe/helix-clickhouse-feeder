@@ -58,12 +58,12 @@ createTargets().forEach((target) => {
         owner: '123456789012',
         logGroup: `/aws/lambda/${target.package}--${target.name}`,
         logStream: '2023/12/21/[$LATEST]b9bef68d412241e8be88efac966e2a5c',
-        subscriptionFilters: ['helix-datadog-feeder'],
+        subscriptionFilters: ['helix-clickhouse-feeder'],
         logEvents: [
           {
             id: '37982106607541042296547451702039639661941462854257278977',
             timestamp: now.getTime(),
-            message: `${now.toISOString()}\t576e61bb-40b7-4f8d-a6fb-da189d92c437\tINFO\tthis should appear in DataDog\n`,
+            message: `${now.toISOString()}\t576e61bb-40b7-4f8d-a6fb-da189d92c437\tINFO\tthis should appear in ClickHouse\n`,
           },
         ],
       };

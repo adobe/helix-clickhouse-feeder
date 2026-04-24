@@ -30,7 +30,7 @@ const MOCHA_ENV = (process.env.HELIX_FETCH_FORCE_HTTP1 === 'true');
 /**
  * Create a fetch wrapper that retries on FetchError and throws on bad status.
  *
- * @param {string} label label used in error messages (e.g. "DataDog", "ClickHouse")
+ * @param {string} label label used in error messages (e.g. "ClickHouse")
  * @returns {typeof fetch} wrapped fetch function
  */
 export function createFetchRetry(label) {

@@ -22,7 +22,7 @@ module.exports = {
     }],
     ['@semantic-release/github', {
       assets: [
-        { path: 'dist/**/*.zip', label: 'Helix DataDog Feeder Bundle' }
+        { path: 'dist/**/*.zip', label: 'Helix ClickHouse Feeder Bundle' }
       ]
     }],
   ],

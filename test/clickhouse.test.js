@@ -26,6 +26,8 @@ describe('ClickHouse Tests', () => {
   });
 
   it('sends entries with correct JSONEachRow body format', async () => {
+    const date = new Date('2022-11-10T12:53:47.204Z');
+
     nock.clickhouse()
       .reply((_, body) => {
         // nock auto-parses single-line JSON; reconstruct the string
@@ -58,7 +60,6 @@ describe('ClickHouse Tests', () => {
       logStream: 'my-stream',
       logGroup: '/aws/lambda/services--func',
     });
-    const date = new Date('2022-11-10T12:53:47.204Z');
     await assert.doesNotReject(
       async () => logger.sendEntries([
         {

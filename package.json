@@ -1,8 +1,8 @@
 {
-  "name": "@adobe/helix-datadog-feeder",
+  "name": "@adobe/helix-clickhouse-feeder",
   "version": "1.2.0",
   "private": true,
-  "description": "Helix DataDog Feeder",
+  "description": "Helix ClickHouse Feeder",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -20,7 +20,7 @@
   },
   "wsk": {
     "target": "aws",
-    "name": "helix3/datadog-feeder@${version}",
+    "name": "helix3/clickhouse-feeder@${version}",
     "memory": 1024,
     "testUrl": "/_status_check/healthcheck.json",
     "awsAttachAuthorizer": "helix-token-authorizer_v2",
@@ -38,14 +38,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/helix-datadog-feeder"
+    "url": "https://github.com/adobe/helix-clickhouse-feeder"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/adobe/helix-datadog-feeder/issues"
+    "url": "https://github.com/adobe/helix-clickhouse-feeder/issues"
   },
-  "homepage": "https://github.com/adobe/helix-datodog-feeder#readme",
+  "homepage": "https://github.com/adobe/helix-clickhouse-feeder#readme",
   "dependencies": {
     "@adobe/fetch": "4.2.3",
     "@adobe/helix-shared-secrets": "2.3.0",
