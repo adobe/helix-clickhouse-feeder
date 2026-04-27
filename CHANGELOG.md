@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.2.0...v1.3.0) (2026-04-27)
+
+
+### Features
+
+* remove DataDog, make ClickHouse the sole log target ([#20](https://github.com/adobe/helix-clickhouse-feeder/issues/20)) ([f8a45cd](https://github.com/adobe/helix-clickhouse-feeder/commit/f8a45cdcfe17b9442f3586fa762c66816ef35036))
+
 # [1.2.0](https://github.com/adobe/helix-datadog-feeder/compare/v1.1.1...v1.2.0) (2026-02-05)
 
 
