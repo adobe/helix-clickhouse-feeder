@@ -28,15 +28,10 @@ const DEFAULT_ENV = {
   AWS_ACCESS_KEY_ID: 'aws-access-key-id',
   AWS_SECRET_ACCESS_KEY: 'aws-secret-access-key',
   AWS_SESSION_TOKEN: 'aws-session-token',
-  DATADOG_API_KEY: 'api-key',
-  DATADOG_LOG_LEVEL: 'info',
-};
-
-const DUAL_ENV = {
-  ...DEFAULT_ENV,
   CLICKHOUSE_HOST: 'ch.example.cloud',
   CLICKHOUSE_USER: 'writer',
   CLICKHOUSE_PASSWORD: 'secret',
+  CLICKHOUSE_LOG_LEVEL: 'info',
 };
 
 describe('Index Tests', () => {
@@ -64,8 +59,8 @@ describe('Index Tests', () => {
     },
     func: {
       app: 'aws-account-id',
-      fqn: 'arn:aws:lambda:us-east-1:123456789012:function:datadog-feeder:1_2_3',
-      name: 'datadog-feeder',
+      fqn: 'arn:aws:lambda:us-east-1:123456789012:function:clickhouse-feeder:1_2_3',
+      name: 'clickhouse-feeder',
     },
     env,
     log: console,
@@ -78,7 +73,28 @@ describe('Index Tests', () => {
   });
 
   it('invokes index with payload', async () => {
-    const payload = 'H4sIABDuMmkAA9WWTU8bMRCG7/yKKGc2mRl77HFuSAXUQ9sDnEoQctZOWCnZpLsboEL893pJwleLlCiiEnuyNR8ev/NovPcHnfR1Z7Gu/SSe/17E7qDT/XJ0fnT17fjs7Oj0uHu4cpnflrFqjYiiFRtDqN3GOJ1PTqv5ctHa+/627k/9bBR8/zpOi7usjtVNkcc6y4oyxLuU5jnsrKmin7VxBER9hD5x/8IYdSnWxrHRPgabazYgJmjwGKJBryXPN0nq5ajOq2LRFPPypJg2sapTuotH46PD+tDspWP30Xz5XMfxTSyb14H3T6tVmtBWqSwaEQVs0DKbJARqA1bIOiStEDWhQXEA4thoYeWSGTZKPWVriqR542etZGiMsSAA7ITe+K07sxEoQ8iIz1EPyAw091LAz2GD3mvnCLPcjSTTgHnmxspnYyInzo+EgYfN1+8nP4ZN8I0P88mgM54u6+uinHSws4hlaFdV/LVMVdW9Xm9Yvq043jWVz5sYToo4Da1UrwVaObUytsXud9hjrrXD1Ur4be74rywvhX5Xwu6ruIen3cPhtjQopcSJMCkLioGQWQugFWRHWpAUKbRW2ELabkWDAVa70GB6wLg3DfBXgzphXsYPA2Lr8/4fEysh92XCtN1WCjkNTGQhRieWjAGHWhw5q7mdEAma1GqNehsmMOWSHZhg7KWAxESw6GzMIUOPlJSyIROV64x9O6q851zDZ58Q29xxdxrWEu5Pg0s9VsaSEHB6FdKLZtEqdmiNKCHRWixoSE9fMr/F9h0aiHekgdjuTcNnmhAfxkQr5LtMrH4uDh7+APm1kT9eCQAA';
+    const payload = (await gzip(JSON.stringify({
+      logEvents: [
+        {
+          extractedFields: {
+            event: 'INFO\tdatadog: flushing 1 pending requests...\n',
+            request_id: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
+            timestamp: '2022-10-25T14:26:45.982Z',
+          },
+          timestamp: 1666708005982,
+        },
+        {
+          extractedFields: {
+            event: 'INFO\tdatadog: flushing 0 pending requests done.\n',
+            request_id: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
+            timestamp: '2022-10-25T14:26:46.051Z',
+          },
+          timestamp: 1666708006053,
+        },
+      ],
+      logGroup: '/aws/lambda/helix-services--indexer',
+      logStream: '2022/10/25/[663]877ef64aed7c456086d40a1de61a48cc',
+    }))).toString('base64');
 
     nock('https://lambda.us-east-1.amazonaws.com')
       .get('/2015-03-31/functions/helix-services--indexer/aliases?FunctionVersion=663')
@@ -90,77 +106,20 @@ describe('Index Tests', () => {
         }],
       });
 
-    nock.datadog({ apiKey: DEFAULT_ENV.DATADOG_API_KEY })
+    nock.clickhouse()
       .reply((_, body) => {
-        assert.deepStrictEqual(body, [{
-          ddsource: 'aws-lambda',
-          ddtags: 'version:4.3.47',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:helix-services--indexer',
-          message: JSON.stringify({
-            inv: {
-              invocationId: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-              functionName: '/helix-services/indexer/v4',
-            },
-            message: 'datadog: flushing 1 pending requests...',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:45.982Z',
-            logStream: '2022/10/25/[663]877ef64aed7c456086d40a1de61a48cc',
-          }),
-          timestamp: 1666708005982,
-        }, {
-          ddsource: 'aws-lambda',
-          ddtags: 'version:4.3.47',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:helix-services--indexer',
-          message: JSON.stringify({
-            inv: {
-              invocationId: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-              functionName: '/helix-services/indexer/v4',
-            },
-            message: 'datadog: flushing 0 pending requests done.',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:46.051Z',
-            logStream: '2022/10/25/[663]877ef64aed7c456086d40a1de61a48cc',
-          }),
-          timestamp: 1666708006053,
-        }, {
-          ddsource: 'aws-lambda',
-          ddtags: 'version:4.3.47',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:helix-services--indexer',
-          message: JSON.stringify({
-            inv: {
-              invocationId: 'd7197ec0-1a12-407d-83c4-5a8900aa5c40',
-              functionName: '/helix-services/indexer/v4',
-            },
-            message: 'datadog: flushing 1 pending requests...',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:51.188Z',
-            logStream: '2022/10/25/[663]877ef64aed7c456086d40a1de61a48cc',
-          }),
-          timestamp: 1666708011188,
-        }, {
-          ddsource: 'aws-lambda',
-          ddtags: 'version:4.3.47',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:helix-services--indexer',
-          message: JSON.stringify({
-            inv: {
-              invocationId: 'd7197ec0-1a12-407d-83c4-5a8900aa5c40',
-              functionName: '/helix-services/indexer/v4',
-            },
-            message: 'datadog: flushing 0 pending requests done.',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:51.257Z',
-            logStream: '2022/10/25/[663]877ef64aed7c456086d40a1de61a48cc',
-          }),
-          timestamp: 1666708011258,
-        }]);
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const lines = raw.trim().split('\n');
+        assert.strictEqual(lines.length, 2);
+        const entry0 = JSON.parse(lines[0]);
+        assert.strictEqual(entry0.function_name, '/helix-services/indexer/v4');
+        assert.strictEqual(entry0.message, 'datadog: flushing 1 pending requests...');
+        assert.strictEqual(entry0.request_id, '1aa49921-c9b8-401c-9f3a-f22989ab8505');
+        assert.strictEqual(entry0.level, 'info');
+        assert.strictEqual(entry0.timestamp, 1666708005982);
+        const entry1 = JSON.parse(lines[1]);
+        assert.strictEqual(entry1.function_name, '/helix-services/indexer/v4');
+        assert.strictEqual(entry1.message, 'datadog: flushing 0 pending requests done.');
         return [200];
       });
 
@@ -193,25 +152,15 @@ describe('Index Tests', () => {
       logStream: '2022/10/28/[$LATEST]dbbf94bd5cb34f00aa764103d8ed78f2',
     }))).toString('base64');
 
-    nock.datadog()
+    nock.clickhouse()
       .reply((_, body) => {
-        assert.deepStrictEqual(body, [{
-          ddsource: 'aws-lambda',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:services--func',
-          message: JSON.stringify({
-            inv: {
-              invocationId: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-              functionName: '/services/func/$LATEST',
-            },
-            message: 'this\nis\na\nmessage',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:45.982Z',
-            logStream: '2022/10/28/[$LATEST]dbbf94bd5cb34f00aa764103d8ed78f2',
-          }),
-          timestamp: 1666708005982,
-        }]);
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const lines = raw.trim().split('\n');
+        // only INFO entry should be sent (DEBUG filtered at default info level)
+        assert.strictEqual(lines.length, 1);
+        const entry = JSON.parse(lines[0]);
+        assert.strictEqual(entry.function_name, '/services/func/$LATEST');
+        assert.strictEqual(entry.message, 'this\nis\na\nmessage');
         return [200];
       });
 
@@ -255,36 +204,20 @@ describe('Index Tests', () => {
         }],
       });
 
-    nock.datadog({ url: 'https://www.example.com' })
+    nock.clickhouse()
       .reply((_, body) => {
-        assert.deepStrictEqual(body, [{
-          ddsource: 'aws-lambda',
-          ddtags: 'version:4.3.47',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:services--func',
-          message: JSON.stringify({
-            inv: {
-              invocationId: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-              functionName: '/services/func/4.3.47',
-            },
-            message: 'this\nis\na\nmessage',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:45.982Z',
-            logStream: '2022/10/28/[356]dbbf94bd5cb34f00aa764103d8ed78f2',
-          }),
-          timestamp: 1666708005982,
-        }]);
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const lines = raw.trim().split('\n');
+        assert.strictEqual(lines.length, 1);
+        const entry = JSON.parse(lines[0]);
+        assert.strictEqual(entry.function_name, '/services/func/4.3.47');
         return [200];
       });
 
     await assert.doesNotReject(
       async () => main(
         new Request('https://localhost/'),
-        TEST_CONTEXT(payload, {
-          ...DEFAULT_ENV,
-          DATADOG_API_URL: 'https://www.example.com',
-        }),
+        TEST_CONTEXT(payload),
       ),
     );
   });
@@ -319,35 +252,20 @@ describe('Index Tests', () => {
         Aliases: [],
       });
 
-    nock.datadog({ url: 'https://www.example.com' })
+    nock.clickhouse()
       .reply((_, body) => {
-        assert.deepStrictEqual(body, [{
-          ddsource: 'aws-lambda',
-          hostname: 'lambda',
-          level: 'INFO',
-          service: 'arn:aws:lambda:us-east-1:123456789012:function:services--func',
-          message: JSON.stringify({
-            inv: {
-              invocationId: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-              functionName: '/services/func/356',
-            },
-            message: 'this\nis\na\nmessage',
-            level: 'info',
-            timestamp: '2022-10-25T14:26:45.982Z',
-            logStream: '2022/10/28/[356]dbbf94bd5cb34f00aa764103d8ed78f2',
-          }),
-          timestamp: 1666708005982,
-        }]);
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const lines = raw.trim().split('\n');
+        assert.strictEqual(lines.length, 1);
+        const entry = JSON.parse(lines[0]);
+        assert.strictEqual(entry.function_name, '/services/func/356');
         return [200];
       });
 
     await assert.doesNotReject(
       async () => main(
         new Request('https://localhost/'),
-        TEST_CONTEXT(payload, {
-          ...DEFAULT_ENV,
-          DATADOG_API_URL: 'https://www.example.com',
-        }),
+        TEST_CONTEXT(payload),
       ),
     );
   });
@@ -373,7 +291,7 @@ describe('Index Tests', () => {
     );
   });
 
-  it('returns error when DATADOG_API_KEY is missing', async () => {
+  it('returns error when ClickHouse configuration is missing', async () => {
     const payload = (await gzip(JSON.stringify({
       logEvents: [{
         timestamp: Date.now(),
@@ -386,11 +304,11 @@ describe('Index Tests', () => {
     }))).toString('base64');
 
     const env = { ...DEFAULT_ENV };
-    delete env.DATADOG_API_KEY;
+    delete env.CLICKHOUSE_HOST;
 
     const res = await main(new Request('https://localhost/'), TEST_CONTEXT(payload, env));
     assert.strictEqual(res.status, 500);
-    assert.strictEqual(await res.text(), 'No DATADOG_API_KEY set');
+    assert.strictEqual(await res.text(), 'Missing ClickHouse configuration (CLICKHOUSE_HOST, CLICKHOUSE_USER, or CLICKHOUSE_PASSWORD)');
   });
 
   it('returns error when AWS environment is missing', async () => {
@@ -436,7 +354,7 @@ describe('Index Tests', () => {
         }],
       });
 
-    nock.datadog()
+    nock.clickhouse()
       .reply(403, 'that went wrong');
 
     nock('https://sqs.us-east-1.amazonaws.com')
@@ -457,13 +375,15 @@ describe('Index Tests', () => {
     );
   });
 
-  it('allows definining subscription filter without pattern', async () => {
+  it('allows defining subscription filter without pattern', async () => {
     const contents = await fs.readFile(resolve(__rootdir, 'test', 'fixtures', 'patternless.json'));
-    const { input, output } = JSON.parse(contents);
+    const { input, expectedCount } = JSON.parse(contents);
 
-    nock.datadog()
+    nock.clickhouse()
       .reply((_, body) => {
-        assert.deepStrictEqual(body, output);
+        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const lines = raw.trim().split('\n');
+        assert.strictEqual(lines.length, expectedCount);
         return [200];
       });
     nock('https://sqs.us-east-1.amazonaws.com')
@@ -493,116 +413,9 @@ describe('Index Tests', () => {
         }),
         TEST_CONTEXT(null, {
           ...DEFAULT_ENV,
-          DATADOG_LOG_LEVEL: 'debug',
+          CLICKHOUSE_LOG_LEVEL: 'debug',
         }),
       ),
-    );
-  });
-
-  it('sends to both DataDog and ClickHouse when both configured', async () => {
-    const payload = (await gzip(JSON.stringify({
-      logEvents: [
-        {
-          extractedFields: {
-            event: 'INFO\thello dual\n',
-            request_id: '1aa49921-c9b8-401c-9f3a-f22989ab8505',
-            timestamp: '2022-10-25T14:26:45.982Z',
-          },
-          timestamp: 1666708005982,
-        },
-      ],
-      logGroup: '/aws/lambda/services--func',
-      logStream: '2022/10/28/[$LATEST]dbbf94bd5cb34f00aa764103d8ed78f2',
-    }))).toString('base64');
-
-    nock.datadog()
-      .reply(200);
-
-    nock.clickhouse()
-      .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
-        assert.strictEqual(entry.function_name, '/services/func/$LATEST');
-        assert.strictEqual(entry.message, 'hello dual');
-        return [200];
-      });
-
-    const res = await main(
-      new Request('https://localhost/'),
-      TEST_CONTEXT(payload, DUAL_ENV),
-    );
-    assert.strictEqual(res.status, 202);
-  });
-
-  it('ClickHouse failure does NOT throw when DataDog succeeds', async () => {
-    const payload = (await gzip(JSON.stringify({
-      logEvents: [
-        {
-          extractedFields: {
-            event: 'INFO\tmessage\n',
-          },
-          timestamp: Date.now(),
-        },
-      ],
-      logGroup: '/aws/lambda/services--func',
-      logStream: '2022/10/28/[$LATEST]dbbf94bd5cb34f00aa764103d8ed78f2',
-    }))).toString('base64');
-
-    nock.datadog()
-      .reply(200);
-
-    nock.clickhouse()
-      .twice()
-      .replyWithError('clickhouse down');
-
-    const res = await main(
-      new Request('https://localhost/'),
-      TEST_CONTEXT(payload, DUAL_ENV),
-    );
-    assert.strictEqual(res.status, 202);
-  });
-
-  it('DataDog failure throws even when ClickHouse succeeds', async () => {
-    const payload = (await gzip(JSON.stringify({
-      logEvents: [
-        {
-          extractedFields: {
-            event: 'INFO\tmessage\n',
-          },
-          timestamp: Date.now(),
-        },
-      ],
-      logGroup: '/aws/lambda/services--func',
-      logStream: '2022/10/28/[$LATEST]dbbf94bd5cb34f00aa764103d8ed78f2',
-    }))).toString('base64');
-
-    nock.datadog()
-      .reply(403, 'forbidden');
-
-    nock.clickhouse()
-      .reply(200);
-
-    nock('https://sqs.us-east-1.amazonaws.com')
-      .post('/')
-      .reply(200, `<?xml version="1.0"?>
-<SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
-  <SendMessageResult>
-    <MessageId>id</MessageId>
-  </SendMessageResult>
-  <ResponseMetadata>
-    <RequestId>id</RequestId>
-  </ResponseMetadata>
-</SendMessageResponse>
-`);
-
-    await assert.rejects(
-      async () => main(
-        new Request('https://localhost/'),
-        TEST_CONTEXT(payload, DUAL_ENV),
-      ),
-      /forbidden/,
     );
   });
 });

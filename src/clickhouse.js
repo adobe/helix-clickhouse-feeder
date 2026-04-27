@@ -139,7 +139,7 @@ export class ClickHouseLogger {
     const resp = await fetchRetry(new Request(url.href, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'text/plain',
         authorization: `Basic ${auth}`,
       },
       body,

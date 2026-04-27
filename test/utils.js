@@ -34,14 +34,6 @@ export function Nock() {
     return scope;
   }
 
-  nocker.datadog = ({ url = 'https://http-intake.logs.datadoghq.com', apiKey } = {}) => {
-    let scope = nocker(url);
-    if (apiKey) {
-      scope = scope.matchHeader('DD-API-KEY', `${apiKey}`);
-    }
-    return scope.post('/api/v2/logs');
-  };
-
   nocker.clickhouse = ({ host = 'ch.example.cloud' } = {}) => nocker(`https://${host}:8443`).post(/.*/);
 
   nocker.done = () => {

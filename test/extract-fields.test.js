@@ -117,6 +117,53 @@ describe('Extract Fields Tests', () => {
     });
   });
 
+  it('handles extractedFields with event containing tab-separated level', async () => {
+    const fields = extractFields({
+      extractedFields: {
+        event: 'INFO\tsome extracted message\n',
+        request_id: 'abc-123',
+        timestamp: '2024-11-21T13:12:30.462Z',
+      },
+    });
+    assert.deepStrictEqual(fields, {
+      level: 'INFO',
+      message: 'some extracted message\n',
+      requestId: 'abc-123',
+      timestamp: '2024-11-21T13:12:30.462Z',
+    });
+  });
+
+  it('handles extractedFields with event lacking tab (defaults to INFO)', async () => {
+    const fields = extractFields({
+      extractedFields: {
+        event: 'Task timed out after 60.07 seconds\n\n',
+      },
+    });
+    assert.deepStrictEqual(fields, {
+      level: 'INFO',
+      message: 'Task timed out after 60.07 seconds\n\n',
+      requestId: undefined,
+      timestamp: undefined,
+    });
+  });
+
+  it('handles extractedFields with explicit level field', async () => {
+    const fields = extractFields({
+      extractedFields: {
+        event: 'this is a warning message',
+        level: 'WARN',
+        request_id: 'def-456',
+        timestamp: '2024-11-21T13:12:30.462Z',
+      },
+    });
+    assert.deepStrictEqual(fields, {
+      level: 'WARN',
+      message: 'this is a warning message',
+      requestId: 'def-456',
+      timestamp: '2024-11-21T13:12:30.462Z',
+    });
+  });
+
   it('returns \'null\' for messages with no known pattern', async () => {
     const fields = extractFields({
       message: 'This message has no known pattern and will be discarded\n',

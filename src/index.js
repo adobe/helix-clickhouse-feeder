@@ -15,7 +15,6 @@ import { Response } from '@adobe/fetch';
 import wrap from '@adobe/helix-shared-wrap';
 import secrets from '@adobe/helix-shared-secrets';
 import { helixStatus } from '@adobe/helix-status';
-import { DataDogLogger } from './datadog.js';
 import { ClickHouseLogger } from './clickhouse.js';
 import { resolve } from './alias.js';
 import { sendToDLQ } from './dlq.js';
@@ -54,22 +53,17 @@ async function run(request, context) {
   const {
     invocation: { event },
     env: {
-      DATADOG_API_KEY: apiKey,
-      DATADOG_API_URL: apiUrl,
-      DATADOG_LOG_LEVEL: level = 'info',
       CLICKHOUSE_HOST: clickhouseHost,
       CLICKHOUSE_USER: clickhouseUser,
       CLICKHOUSE_PASSWORD: clickhousePassword,
       CLICKHOUSE_DATABASE: clickhouseDatabase,
-    },
-    func: {
-      fqn,
+      CLICKHOUSE_LOG_LEVEL: level = 'info',
     },
     log,
   } = context;
 
-  if (!apiKey) {
-    const msg = 'No DATADOG_API_KEY set';
+  if (!clickhouseHost || !clickhouseUser || !clickhousePassword) {
+    const msg = 'Missing ClickHouse configuration (CLICKHOUSE_HOST, CLICKHOUSE_USER, or CLICKHOUSE_PASSWORD)';
     log.error(msg);
     return new Response(msg, { status: 500 });
   }
@@ -91,60 +85,23 @@ async function run(request, context) {
       alias = await resolve(context, funcName, funcVersion);
     }
     const [packageName, serviceName] = funcName.split('--');
-    const arn = fqn.split(':');
     const funcPath = `/${packageName}/${serviceName}/${alias?.major ?? alias?.full ?? funcVersion}`;
 
-    const datadogLogger = new DataDogLogger({
-      apiKey,
+    const clickhouseLogger = new ClickHouseLogger({
+      host: clickhouseHost,
+      user: clickhouseUser,
+      password: clickhousePassword,
+      database: clickhouseDatabase,
       funcName: funcPath,
-      version: alias?.full,
-      alias,
-      service: `${arn.slice(0, 6).join(':')}:${funcName}`,
-      logStream: input.logStream,
+      appName: context.func.app,
       log,
-      apiUrl,
       level,
+      logStream: input.logStream,
+      logGroup: input.logGroup,
     });
 
-    const sends = [datadogLogger.sendEntries(input.logEvents)];
-
-    const clickhouseEnabled = clickhouseHost && clickhouseUser && clickhousePassword;
-    if (clickhouseEnabled) {
-      const clickhouseLogger = new ClickHouseLogger({
-        host: clickhouseHost,
-        user: clickhouseUser,
-        password: clickhousePassword,
-        database: clickhouseDatabase,
-        funcName: funcPath,
-        appName: context.func.app,
-        log,
-        level,
-        logStream: input.logStream,
-        logGroup: input.logGroup,
-      });
-      sends.push(clickhouseLogger.sendEntries(input.logEvents));
-    }
-
-    const results = await Promise.allSettled(sends);
-
-    // DataDog result (index 0): failure must throw (triggers DLQ)
-    const datadogResult = results[0];
-    if (datadogResult.status === 'rejected') {
-      throw datadogResult.reason;
-    }
-
-    const { rejected, sent } = datadogResult.value;
-    log.info(`Received ${input.logEvents.length} event(s) for [${input.logGroup}][${input.logStream}], sent to DataDog: ${sent}`);
-
-    // ClickHouse result (index 1): failure is logged but does not throw
-    if (clickhouseEnabled) {
-      const clickhouseResult = results[1];
-      if (clickhouseResult.status === 'rejected') {
-        log.error(`ClickHouse send failed: ${clickhouseResult.reason.message}`);
-      } else {
-        log.info(`Sent ${clickhouseResult.value.sent} event(s) to ClickHouse`);
-      }
-    }
+    const { rejected, sent } = await clickhouseLogger.sendEntries(input.logEvents);
+    log.info(`Received ${input.logEvents.length} event(s) for [${input.logGroup}][${input.logStream}], sent to ClickHouse: ${sent}`);
 
     if (rejected.length) {
       await sendToDLQ(context, rejected);

@@ -37,7 +37,7 @@ describe('DLQ Tests', () => {
       accountId: 'account-id',
     },
     func: {
-      name: 'datadog-feeder',
+      name: 'clickhouse-feeder',
     },
     log: console,
     env,
@@ -50,7 +50,7 @@ describe('DLQ Tests', () => {
       .post('/')
       .reply((_, body) => {
         const params = new URLSearchParams(body);
-        assert.strictEqual(params.get('QueueUrl'), 'https://sqs.us-east-1.amazonaws.com/account-id/helix-datadog-feeder-dlq');
+        assert.strictEqual(params.get('QueueUrl'), 'https://sqs.us-east-1.amazonaws.com/account-id/helix-clickhouse-feeder-dlq');
         return [200, `<?xml version="1.0"?>
   <SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
   <SendMessageResult>
