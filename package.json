@@ -48,14 +48,14 @@
   "homepage": "https://github.com/adobe/helix-clickhouse-feeder#readme",
   "dependencies": {
     "@adobe/fetch": "4.3.0",
-    "@adobe/helix-shared-secrets": "2.3.1",
+    "@adobe/helix-shared-secrets": "2.3.2",
     "@adobe/helix-shared-wrap": "2.0.2",
     "@adobe/helix-status": "10.1.5",
     "aws4": "1.13.2",
     "fetch-retry": "6.0.0"
   },
   "devDependencies": {
-    "@adobe/eslint-config-helix": "3.0.26",
+    "@adobe/eslint-config-helix": "3.0.27",
     "@adobe/helix-deploy": "13.5.8",
     "@adobe/helix-universal": "5.4.1",
     "@adobe/helix-universal-devserver": "1.1.147",
