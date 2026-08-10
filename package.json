@@ -59,7 +59,7 @@
     "@adobe/helix-deploy": "13.5.8",
     "@adobe/helix-universal": "5.4.3",
     "@adobe/helix-universal-devserver": "1.1.149",
-    "@eslint/config-helpers": "0.6.0",
+    "@eslint/config-helpers": "0.7.0",
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/exec": "7.1.0",
     "@semantic-release/git": "10.0.1",
