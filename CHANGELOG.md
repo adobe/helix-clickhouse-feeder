@@ -1,3 +1,10 @@
+## [1.3.9](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.3.8...v1.3.9) (2026-10-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/fetch to v4.3.2 ([#58](https://github.com/adobe/helix-clickhouse-feeder/issues/58)) ([ad138b5](https://github.com/adobe/helix-clickhouse-feeder/commit/ad138b509be870dc31abf7e90f17aa046b459423))
+
 ## [1.3.8](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.3.7...v1.3.8) (2026-09-01)
 
 
