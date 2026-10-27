@@ -107,6 +107,7 @@ export async function resolve(context, funcName, funcVersion) {
   if (alias && alias.expiry > Date.now()) {
     return cleanAlias(alias);
   }
+  log.debug(`Fetching aliases for: ${funcName}:${funcVersion}`);
   const resp = await fetchAliases(context, funcName, funcVersion);
   if (!resp.ok) {
     const msg = `Failed to retrieve aliases for ${funcName}: ${resp.status}\n${await resp.text()}`;
@@ -119,6 +120,8 @@ export async function resolve(context, funcName, funcVersion) {
     log.warn(msg);
     return null;
   }
+  log.debug(`Found ${aliases.length} alias(es) for: ${funcName}:${funcVersion}`);
+
   alias = {};
   aliases.forEach(({ Name: name }) => {
     if (name.startsWith('v')) {
