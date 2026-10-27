@@ -7,8 +7,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon",
-    "test": "c8 mocha  -i -g 'Post-Deploy' --spec=test/**/*.test.js",
-    "test-postdeploy": "mocha -g 'Post-Deploy' --spec=test/**/*.test.js",
+    "test": "c8 mocha",
+    "test-postdeploy": "mocha --no-package --spec=test/post-deploy.test.js",
     "lint": "eslint .",
     "semantic-release": "semantic-release",
     "commit": "git-cz",
@@ -28,13 +28,16 @@
     "nodeVersion": 22
   },
   "mocha": {
+    "exclude": ["test/post-deploy.test.js"],
+    "parallel": true,
     "require": [
       "test/setup-env.js",
       "mocha-suppress-logs"
     ],
     "recursive": "true",
     "reporter": "mocha-multi-reporters",
-    "reporter-options": "configFile=.mocha-multi.json"
+    "reporter-options": "configFile=.mocha-multi.json",
+    "spec":["test/**/*.test.js"]
   },
   "repository": {
     "type": "git",

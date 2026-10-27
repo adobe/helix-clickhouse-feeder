@@ -77,8 +77,11 @@ async function run(request, context) {
       return new Response('', { status: 204 });
     }
 
-    const [,,, funcName] = input.logGroup.split('/');
-    const [, funcVersion] = input.logStream.match(/\d{4}\/\d{2}\/\d{2}\/[a-z-]*\[(\d+|\$LATEST)\]\w+/);
+    const { logEvents, logGroup, logStream } = input;
+    log.info(`Received ${logEvents.length} event(s) for [${logGroup}:${logStream}]`);
+
+    const [,,, funcName] = logGroup.split('/');
+    const [, funcVersion] = logStream.match(/\d{4}\/\d{2}\/\d{2}\/[a-z-]*\[(\d+|\$LATEST)\]\w+/);
 
     let alias;
     if (funcVersion !== '$LATEST') {
@@ -96,12 +99,12 @@ async function run(request, context) {
       appName: context.func.app,
       log,
       level,
-      logStream: input.logStream,
-      logGroup: input.logGroup,
+      logStream,
+      logGroup,
     });
 
-    const { rejected, sent } = await clickhouseLogger.sendEntries(input.logEvents);
-    log.info(`Received ${input.logEvents.length} event(s) for [${input.logGroup}][${input.logStream}], sent to ClickHouse: ${sent}`);
+    const { rejected, sent } = await clickhouseLogger.sendEntries(logEvents);
+    log.info(`Sent ${sent} event(s) to ClickHouse, ${rejected.length} were rejected.`);
 
     if (rejected.length) {
       await sendToDLQ(context, rejected);
