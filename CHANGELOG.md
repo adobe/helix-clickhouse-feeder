@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.0...v1.4.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* show more log messages, already before await ([#67](https://github.com/adobe/helix-clickhouse-feeder/issues/67)) ([b3a2f12](https://github.com/adobe/helix-clickhouse-feeder/commit/b3a2f12c6ede6f6c971455c05d002dbda4f65156))
+
 # [1.4.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.3.9...v1.4.0) (2026-10-27)
 
 

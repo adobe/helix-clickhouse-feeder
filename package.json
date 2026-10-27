@@ -1,6 +1,6 @@
 {
   "name": "@adobe/helix-clickhouse-feeder",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "Helix ClickHouse Feeder",
   "main": "src/index.js",
@@ -28,7 +28,9 @@
     "nodeVersion": 22
   },
   "mocha": {
-    "exclude": ["test/post-deploy.test.js"],
+    "exclude": [
+      "test/post-deploy.test.js"
+    ],
     "parallel": true,
     "require": [
       "test/setup-env.js",
@@ -37,7 +39,9 @@
     "recursive": "true",
     "reporter": "mocha-multi-reporters",
     "reporter-options": "configFile=.mocha-multi.json",
-    "spec":["test/**/*.test.js"]
+    "spec": [
+      "test/**/*.test.js"
+    ]
   },
   "repository": {
     "type": "git",
