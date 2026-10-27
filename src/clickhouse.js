@@ -14,7 +14,7 @@
 
 import { Request } from '@adobe/fetch';
 import { extractFields } from './extract-fields.js';
-import { createFetchRetry } from './utils.js';
+import { fetchWithTimeout } from './utils.js';
 import { LOG_LEVEL_MAPPING } from './constants.js';
 
 /**
@@ -29,8 +29,6 @@ import { LOG_LEVEL_MAPPING } from './constants.js';
  * @property {string} log_stream CloudWatch log stream
  * @property {string} log_group CloudWatch log group
  */
-
-const fetchRetry = createFetchRetry('ClickHouse');
 
 /**
  * ClickHouse logger.
@@ -125,7 +123,7 @@ export class ClickHouseLogger {
    * Send payload to ClickHouse.
    *
    * @param {ClickHouseLogEntry[]} entries log entries
-   * @returns {Promise<Response>} HTTP answer
+   * @returns {Promise<void>}
    * @throws {Promise<Error>} if an error occurs
    */
   async sendPayload(entries) {
@@ -145,17 +143,26 @@ export class ClickHouseLogger {
     const body = entries.map((entry) => JSON.stringify(entry)).join('\n');
 
     log.debug('Sending entries to Clickhouse...');
-    const resp = await fetchRetry(new Request(url.href, {
-      method: 'POST',
-      headers: {
-        'content-type': 'text/plain',
-        authorization: `Basic ${auth}`,
-      },
-      body,
-    }));
-    log.debug('Sent entries to Clickhouse.');
-
-    return resp;
+    try {
+      const resp = await fetchWithTimeout(new Request(url.href, {
+        method: 'POST',
+        headers: {
+          'content-type': 'text/plain',
+          authorization: `Basic ${auth}`,
+        },
+        body,
+      }));
+      if (!resp.ok) {
+        log.warn(`Clickhouse reported an error: ${await resp.text()} ${resp.status}`);
+      } else {
+        // consume body returned
+        await resp.text();
+        log.debug('Sent entries to Clickhouse.');
+      }
+    } catch (e) {
+      log.debug(e);
+      log.warn(`Clickhouse fetch failed: ${e.message}`);
+    }
   }
 
   /**

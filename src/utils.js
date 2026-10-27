@@ -9,8 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import { context, ALPN_HTTP1_1, FetchError } from '@adobe/fetch';
-import wrapFetch from 'fetch-retry';
+import { context, ALPN_HTTP1_1, timeoutSignal } from '@adobe/fetch';
 
 /**
  * Our global fetch context that limits the number of sockets used.
@@ -25,7 +24,7 @@ const { reset, fetch } = fetchContext;
 
 export const resetConnections = async () => reset();
 
-const MOCHA_ENV = (process.env.HELIX_FETCH_FORCE_HTTP1 === 'true');
+// const MOCHA_ENV = (process.env.HELIX_FETCH_FORCE_HTTP1 === 'true');
 
 /**
  * Create a fetch wrapper that retries on FetchError and throws on bad status.
@@ -33,27 +32,41 @@ const MOCHA_ENV = (process.env.HELIX_FETCH_FORCE_HTTP1 === 'true');
  * @param {string} label label used in error messages (e.g. "ClickHouse")
  * @returns {typeof fetch} wrapped fetch function
  */
-export function createFetchRetry(label) {
-  return wrapFetch(fetch, {
-    retryDelay: (attempt) => {
-      if (MOCHA_ENV) {
-        return 1;
-      }
-      /* c8 ignore next */
-      return (2 ** attempt * 1000); // 1000, 2000, 4000
-    },
-    retryOn: async (attempt, error, response) => {
-      const retries = MOCHA_ENV ? 1 /* c8 ignore next */ : 2;
-      if (error) {
-        if (error instanceof FetchError) {
-          return attempt < retries;
-        }
-        throw error;
-      }
-      if (!response.ok) {
-        throw new Error(`Failed to send logs to ${label} with status ${response.status}: ${await response.text()}`);
-      }
-      return false;
-    },
+// export function createFetchRetry(label) {
+//   return wrapFetch(fetch, {
+//     retryDelay: (attempt) => {
+//       if (MOCHA_ENV) {
+//         return 1;
+//       }
+//       /* c8 ignore next */
+//       return (2 ** attempt * 1000); // 1000, 2000, 4000
+//     },
+//     retryOn: async (attempt, error, response) => {
+//       const retries = MOCHA_ENV ? 1 /* c8 ignore next */ : 2;
+//       if (error) {
+//         if (error instanceof FetchError) {
+//           return attempt < retries;
+//         }
+//         throw error;
+//       }
+//       if (!response.ok) {
+// eslint-disable-next-line max-len
+//         throw new Error(`Failed to send logs to ${label} with status ${response.status}: ${await response.text()}`);
+//       }
+//       return false;
+//     },
+//   });
+// }
+
+/**
+ * Fetch a resource using the global fetch context, aborting after a timeout.
+ *
+ * @param {string|Request} request URL or request object
+ * @param {number} [timeout=10000] timeout in milliseconds
+ * @returns {Promise<Response>} the fetch response
+ */
+export async function fetchWithTimeout(request, timeout = 10_000) {
+  return fetch(request, {
+    signal: timeoutSignal(timeout),
   });
 }
