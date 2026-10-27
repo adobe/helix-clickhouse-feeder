@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.2...v1.4.3) (2026-10-27)
+
+
+### Bug Fixes
+
+* do not use port 8443 ([#68](https://github.com/adobe/helix-clickhouse-feeder/issues/68)) ([95af4ed](https://github.com/adobe/helix-clickhouse-feeder/commit/95af4ed4e37af307a292814805f3180546092af9))
+
 ## [1.4.2](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.1...v1.4.2) (2026-10-27)
 
 
