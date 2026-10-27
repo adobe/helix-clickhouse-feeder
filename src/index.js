@@ -51,7 +51,7 @@ async function getInput(request, context) {
  */
 async function run(request, context) {
   const {
-    invocation: { event },
+    invocation: { id, event },
     env: {
       CLICKHOUSE_HOST: clickhouseHost,
       CLICKHOUSE_USER: clickhouseUser,
@@ -101,6 +101,7 @@ async function run(request, context) {
       level,
       logStream,
       logGroup,
+      queryId: id,
     });
 
     const { rejected, sent } = await clickhouseLogger.sendEntries(logEvents);

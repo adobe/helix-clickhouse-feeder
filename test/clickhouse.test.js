@@ -29,7 +29,10 @@ describe('ClickHouse Tests', () => {
     const date = new Date('2022-11-10T12:53:47.204Z');
 
     nock.clickhouse()
-      .reply((_, body) => {
+      .reply((uri, body) => {
+        const searchParams = new URLSearchParams(uri);
+        assert.strictEqual(searchParams.get('query_id'), 'AWS_REQUEST_ID');
+
         // nock auto-parses single-line JSON; reconstruct the string
         const raw = typeof body === 'string' ? body : JSON.stringify(body);
         const lines = raw.trim().split('\n');
@@ -59,6 +62,7 @@ describe('ClickHouse Tests', () => {
       appName: 'app',
       logStream: 'my-stream',
       logGroup: '/aws/lambda/services--func',
+      queryId: 'AWS_REQUEST_ID',
     });
     await assert.doesNotReject(
       async () => logger.sendEntries([

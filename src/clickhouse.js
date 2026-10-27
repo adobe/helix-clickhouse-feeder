@@ -52,6 +52,7 @@ export class ClickHouseLogger {
    * @param {string} [opts.logStream] CloudWatch log stream name
    * @param {string} [opts.logGroup] CloudWatch log group name
    * @param {string} [opts.subsystem] subsystem name; defaults to second segment of funcName
+   * @param {string} [opts.queryId] query ID to use when INSERTing
    */
   constructor(opts) {
     const {
@@ -67,6 +68,7 @@ export class ClickHouseLogger {
       logStream,
       logGroup,
       subsystem,
+      queryId,
     } = opts;
 
     this._host = host;
@@ -81,6 +83,7 @@ export class ClickHouseLogger {
     this._logStream = logStream;
     this._logGroup = logGroup;
     this._subsystem = subsystem || funcName.split('/')[1];
+    this._queryId = queryId;
   }
 
   /**
@@ -126,7 +129,7 @@ export class ClickHouseLogger {
    * @throws {Promise<Error>} if an error occurs
    */
   async sendPayload(entries) {
-    const { log } = this;
+    const { log, queryId } = this;
 
     const query = `INSERT INTO ${this._table} FORMAT JSONEachRow`;
     const url = new URL(`https://${this._host}/`);
@@ -134,6 +137,9 @@ export class ClickHouseLogger {
     url.searchParams.set('query', query);
     url.searchParams.set('async_insert', '1');
     url.searchParams.set('wait_for_async_insert', '0');
+    if (queryId) {
+      url.searchParams.set('query_id', queryId);
+    }
     const auth = Buffer.from(`${this._user}:${this._password}`).toString('base64');
 
     const body = entries.map((entry) => JSON.stringify(entry)).join('\n');
@@ -181,5 +187,9 @@ export class ClickHouseLogger {
 
   get log() {
     return this._log;
+  }
+
+  get queryId() {
+    return this._queryId;
   }
 }
