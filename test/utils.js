@@ -34,7 +34,7 @@ export function Nock() {
     return scope;
   }
 
-  nocker.clickhouse = ({ host = 'ch.example.cloud' } = {}) => nocker(`https://${host}:8443`).post(/.*/);
+  nocker.clickhouse = ({ host = 'ch.example.cloud' } = {}) => nocker(`https://${host}`).post(/.*/);
 
   nocker.done = () => {
     Object.values(scopes).forEach((s) => s.done());

@@ -126,8 +126,10 @@ export class ClickHouseLogger {
    * @throws {Promise<Error>} if an error occurs
    */
   async sendPayload(entries) {
+    const { log } = this;
+
     const query = `INSERT INTO ${this._table} FORMAT JSONEachRow`;
-    const url = new URL(`https://${this._host}:8443/`);
+    const url = new URL(`https://${this._host}/`);
     url.searchParams.set('database', this._database);
     url.searchParams.set('query', query);
     url.searchParams.set('async_insert', '1');
@@ -136,6 +138,7 @@ export class ClickHouseLogger {
 
     const body = entries.map((entry) => JSON.stringify(entry)).join('\n');
 
+    log.debug('Sending entries to Clickhouse...');
     const resp = await fetchRetry(new Request(url.href, {
       method: 'POST',
       headers: {
@@ -144,6 +147,8 @@ export class ClickHouseLogger {
       },
       body,
     }));
+    log.debug('Sent entries to Clickhouse.');
+
     return resp;
   }
 
