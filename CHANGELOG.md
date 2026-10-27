@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.3.9...v1.4.0) (2026-10-27)
+
+
+### Features
+
+* use shared workflow ([8c020bf](https://github.com/adobe/helix-clickhouse-feeder/commit/8c020bf7defce730ca4ae89d61e7ddb853929ca0))
+
 ## [1.3.9](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.3.8...v1.3.9) (2026-10-12)
 
 
