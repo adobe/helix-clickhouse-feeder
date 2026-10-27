@@ -1,3 +1,10 @@
+## [1.4.4](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.3...v1.4.4) (2026-10-27)
+
+
+### Bug Fixes
+
+* pass query_id to INSERT ([6590b33](https://github.com/adobe/helix-clickhouse-feeder/commit/6590b3386fb668508af942f19d471385990f4ae4))
+
 ## [1.4.3](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.2...v1.4.3) (2026-10-27)
 
 
