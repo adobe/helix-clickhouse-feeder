@@ -63,6 +63,7 @@ describe('ClickHouse Tests', () => {
       logStream: 'my-stream',
       logGroup: '/aws/lambda/services--func',
       queryId: 'AWS_REQUEST_ID',
+      timeout: 0,
     });
     await assert.doesNotReject(
       async () => logger.sendEntries([
@@ -384,5 +385,70 @@ describe('ClickHouse Tests', () => {
       }]),
       /Failed to send logs to ClickHouse with status 400: input malformed/,
     );
+  });
+
+  it('retries on retryable status', async () => {
+    let retries = 0;
+    nock.clickhouse()
+      .reply(() => {
+        retries += 1;
+        return [429];
+      })
+      .post(/.*/)
+      .reply(() => {
+        retries += 1;
+        return [201];
+      });
+
+    const logger = new ClickHouseLogger({
+      host: 'ch.example.cloud',
+      user: 'writer',
+      password: 'secret',
+      funcName: '/services/func/v1',
+      appName: 'app',
+      timeout: 50,
+    });
+    await assert.doesNotReject(
+      async () => logger.sendEntries([{
+        timestamp: Date.now(),
+        extractedFields: {
+          event: 'INFO\tmessage\n',
+        },
+      }]),
+    );
+    assert.strictEqual(retries, 2);
+  });
+
+  it('retries on timeout', async () => {
+    let retries = 0;
+    nock.clickhouse()
+      .delay(200)
+      .reply(() => {
+        retries += 1;
+        return [201];
+      })
+      .post(/.*/)
+      .reply(() => {
+        retries += 1;
+        return [201];
+      });
+
+    const logger = new ClickHouseLogger({
+      host: 'ch.example.cloud',
+      user: 'writer',
+      password: 'secret',
+      funcName: '/services/func/v1',
+      appName: 'app',
+      timeout: 50,
+    });
+    await assert.doesNotReject(
+      async () => logger.sendEntries([{
+        timestamp: Date.now(),
+        extractedFields: {
+          event: 'INFO\tmessage\n',
+        },
+      }]),
+    );
+    assert.strictEqual(retries, 2);
   });
 });
