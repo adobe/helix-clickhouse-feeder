@@ -36,6 +36,7 @@ const isTimeout = (e) => e?.name === 'AbortError' || e?.name === 'TimeoutError';
  * Create a fetch wrapper that retries on FetchError and throws on bad status.
  *
  * @param {string} label label used in error messages (e.g. "ClickHouse")
+ * @param {number} [timeout] request timeout in milliseconds
  * @returns {typeof fetch} wrapped fetch function
  */
 export function createFetchRetry(label, timeout) {
