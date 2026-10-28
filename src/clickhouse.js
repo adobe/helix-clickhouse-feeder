@@ -12,7 +12,6 @@
 
 /* eslint-disable no-await-in-loop */
 
-import { Request } from '@adobe/fetch';
 import { extractFields } from './extract-fields.js';
 import { createFetchRetry } from './utils.js';
 import { LOG_LEVEL_MAPPING } from './constants.js';
@@ -29,8 +28,6 @@ import { LOG_LEVEL_MAPPING } from './constants.js';
  * @property {string} log_stream CloudWatch log stream
  * @property {string} log_group CloudWatch log group
  */
-
-const fetchRetry = createFetchRetry('ClickHouse');
 
 /**
  * ClickHouse logger.
@@ -69,6 +66,7 @@ export class ClickHouseLogger {
       logGroup,
       subsystem,
       queryId,
+      timeout = 5_000,
     } = opts;
 
     this._host = host;
@@ -84,6 +82,7 @@ export class ClickHouseLogger {
     this._logGroup = logGroup;
     this._subsystem = subsystem || funcName.split('/')[1];
     this._queryId = queryId;
+    this._fetch = createFetchRetry('ClickHouse', timeout);
   }
 
   /**
@@ -145,14 +144,14 @@ export class ClickHouseLogger {
     const body = entries.map((entry) => JSON.stringify(entry)).join('\n');
 
     log.debug('Sending entries to Clickhouse...');
-    const resp = await fetchRetry(new Request(url.href, {
+    const resp = await this._fetch(url.href, {
       method: 'POST',
       headers: {
         'content-type': 'text/plain',
         authorization: `Basic ${auth}`,
       },
       body,
-    }));
+    });
     log.debug('Sent entries to Clickhouse.');
 
     return resp;
