@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.4...v1.5.0) (2026-10-28)
+
+
+### Features
+
+* add a timeout to clickhouse requests ([#69](https://github.com/adobe/helix-clickhouse-feeder/issues/69)) ([de7345e](https://github.com/adobe/helix-clickhouse-feeder/commit/de7345eae9dc5ecbebc31935d55e4b148c4154ab))
+
 ## [1.4.4](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.3...v1.4.4) (2026-10-27)
 
 
