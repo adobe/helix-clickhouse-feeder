@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-/* eslint-env mocha */
 import assert from 'assert';
+import zlib from 'zlib';
 import { Nock } from './utils.js';
 import { ClickHouseLogger } from '../src/clickhouse.js';
 
@@ -34,7 +34,7 @@ describe('ClickHouse Tests', () => {
         assert.strictEqual(searchParams.get('query_id'), 'AWS_REQUEST_ID');
 
         // nock auto-parses single-line JSON; reconstruct the string
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 1);
         const entry = JSON.parse(lines[0]);
@@ -81,7 +81,7 @@ describe('ClickHouse Tests', () => {
   it('accepts non-numeric timestamps and converts to epoch millis', async () => {
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const entry = JSON.parse(raw.trim());
         assert.strictEqual(entry.timestamp, 1668084827204);
         assert.strictEqual(typeof entry.timestamp, 'number');
@@ -142,7 +142,7 @@ describe('ClickHouse Tests', () => {
   it('filters entries below configured log level', async () => {
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 1);
         const entry = JSON.parse(lines[0]);
@@ -186,7 +186,7 @@ describe('ClickHouse Tests', () => {
   it('handles unknown log level (defaults to INFO)', async () => {
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 1);
         const entry = JSON.parse(lines[0]);
@@ -224,7 +224,7 @@ describe('ClickHouse Tests', () => {
   it('maps unknown event log level to INFO severity', async () => {
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const entry = JSON.parse(raw.trim());
         assert.strictEqual(entry.level, 'bleep');
         return [200];
