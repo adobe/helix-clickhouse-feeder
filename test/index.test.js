@@ -108,7 +108,7 @@ describe('Index Tests', () => {
 
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 2);
         const entry0 = JSON.parse(lines[0]);
@@ -154,7 +154,7 @@ describe('Index Tests', () => {
 
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         // only INFO entry should be sent (DEBUG filtered at default info level)
         assert.strictEqual(lines.length, 1);
@@ -206,7 +206,7 @@ describe('Index Tests', () => {
 
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 1);
         const entry = JSON.parse(lines[0]);
@@ -254,7 +254,7 @@ describe('Index Tests', () => {
 
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 1);
         const entry = JSON.parse(lines[0]);
@@ -381,7 +381,7 @@ describe('Index Tests', () => {
 
     nock.clickhouse()
       .reply((_, body) => {
-        const raw = typeof body === 'string' ? body : JSON.stringify(body);
+        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, expectedCount);
         return [200];
