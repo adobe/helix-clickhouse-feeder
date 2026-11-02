@@ -48,9 +48,9 @@ describe('DLQ Tests', () => {
   it('uses correct queue URL', async () => {
     nock('https://sqs.us-east-1.amazonaws.com')
       .post('/')
-      .reply((_, body) => {
-        const params = new URLSearchParams(body);
-        assert.strictEqual(params.get('QueueUrl'), 'https://sqs.us-east-1.amazonaws.com/account-id/helix-clickhouse-feeder-dlq');
+      .reply(async (request) => {
+        const searchParams = new URLSearchParams(await request.text());
+        assert.strictEqual(searchParams.get('QueueUrl'), 'https://sqs.us-east-1.amazonaws.com/account-id/helix-clickhouse-feeder-dlq');
         return [200, `<?xml version="1.0"?>
   <SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
   <SendMessageResult>

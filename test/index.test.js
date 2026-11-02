@@ -107,8 +107,8 @@ describe('Index Tests', () => {
       });
 
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
+      .reply(async (request) => {
+        const raw = await request.text();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, 2);
         const entry0 = JSON.parse(lines[0]);
@@ -153,12 +153,9 @@ describe('Index Tests', () => {
     }))).toString('base64');
 
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
+      .reply(async (request) => {
         // only INFO entry should be sent (DEBUG filtered at default info level)
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+        const entry = await request.json();
         assert.strictEqual(entry.function_name, '/services/func/$LATEST');
         assert.strictEqual(entry.message, 'this\nis\na\nmessage');
         return [200];
@@ -205,11 +202,8 @@ describe('Index Tests', () => {
       });
 
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.function_name, '/services/func/4.3.47');
         return [200];
       });
@@ -253,11 +247,8 @@ describe('Index Tests', () => {
       });
 
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.function_name, '/services/func/356');
         return [200];
       });
@@ -380,16 +371,16 @@ describe('Index Tests', () => {
     const { input, expectedCount } = JSON.parse(contents);
 
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
+      .reply(async (request) => {
+        const raw = await request.text();
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, expectedCount);
         return [200];
       });
     nock('https://sqs.us-east-1.amazonaws.com')
       .post('/')
-      .reply((_, body) => {
-        const rejected = JSON.parse(new URLSearchParams(body).get('MessageBody'));
+      .reply(async (request) => {
+        const rejected = JSON.parse(new URLSearchParams(await request.text()).get('MessageBody'));
         assert.strictEqual(rejected.length, 1);
         assert.deepStrictEqual(rejected[0].message, 'This message has no known pattern and will be discarded\n');
         return [200, `<?xml version="1.0"?>

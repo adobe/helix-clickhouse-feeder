@@ -11,7 +11,6 @@
  */
 
 import assert from 'assert';
-import zlib from 'zlib';
 import { Nock } from './utils.js';
 import { ClickHouseLogger } from '../src/clickhouse.js';
 
@@ -29,15 +28,11 @@ describe('ClickHouse Tests', () => {
     const date = new Date('2022-11-10T12:53:47.204Z');
 
     nock.clickhouse()
-      .reply((uri, body) => {
-        const searchParams = new URLSearchParams(uri);
+      .reply(async (request) => {
+        const { searchParams } = new URL(request.url);
         assert.strictEqual(searchParams.get('query_id'), 'AWS_REQUEST_ID');
 
-        // nock auto-parses single-line JSON; reconstruct the string
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+        const entry = await request.json();
         assert.strictEqual(entry.level, 'info');
         assert.strictEqual(entry.message, 'hello world');
         assert.strictEqual(entry.request_id, 'd12ddc0c-1f6b-51d7-be22-83b52c83d6da');
@@ -80,9 +75,8 @@ describe('ClickHouse Tests', () => {
 
   it('accepts non-numeric timestamps and converts to epoch millis', async () => {
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const entry = JSON.parse(raw.trim());
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.timestamp, 1668084827204);
         assert.strictEqual(typeof entry.timestamp, 'number');
         return [200];
@@ -110,13 +104,13 @@ describe('ClickHouse Tests', () => {
   it('uses Basic Auth header and async_insert query parameters', async () => {
     const expectedAuth = `Basic ${Buffer.from('writer:secret').toString('base64')}`;
     nock.clickhouse()
-      .reply(function checkReq() {
+      .reply(async (request) => {
         // Verify Basic Auth header
-        assert.strictEqual(this.req.headers.authorization, expectedAuth);
+        assert.strictEqual(request.headers.get('authorization'), expectedAuth);
         // Verify async_insert query params are in the URL
-        const url = new URL(this.req.path, 'https://ch.example.cloud:8443');
-        assert.strictEqual(url.searchParams.get('async_insert'), '1');
-        assert.strictEqual(url.searchParams.get('wait_for_async_insert'), '0');
+        const { searchParams } = new URL(request.url);
+        assert.strictEqual(searchParams.get('async_insert'), '1');
+        assert.strictEqual(searchParams.get('wait_for_async_insert'), '0');
         return [200];
       });
 
@@ -141,11 +135,8 @@ describe('ClickHouse Tests', () => {
 
   it('filters entries below configured log level', async () => {
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.level, 'warn');
         return [200];
       });
@@ -185,11 +176,8 @@ describe('ClickHouse Tests', () => {
 
   it('handles unknown log level (defaults to INFO)', async () => {
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const lines = raw.trim().split('\n');
-        assert.strictEqual(lines.length, 1);
-        const entry = JSON.parse(lines[0]);
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.level, 'info');
         return [200];
       });
@@ -223,9 +211,8 @@ describe('ClickHouse Tests', () => {
 
   it('maps unknown event log level to INFO severity', async () => {
     nock.clickhouse()
-      .reply((_, body) => {
-        const raw = zlib.gunzipSync(Buffer.from(body, 'hex')).toString();
-        const entry = JSON.parse(raw.trim());
+      .reply(async (request) => {
+        const entry = await request.json();
         assert.strictEqual(entry.level, 'bleep');
         return [200];
       });
