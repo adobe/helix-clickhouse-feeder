@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.5.0...v1.6.0) (2026-11-01)
+
+
+### Features
+
+* compress body before transmitting ([#70](https://github.com/adobe/helix-clickhouse-feeder/issues/70)) ([e3ebb93](https://github.com/adobe/helix-clickhouse-feeder/commit/e3ebb930b935b72f240ee4969b9170b67fa6bbc8))
+
 # [1.5.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.4.4...v1.5.0) (2026-10-28)
 
 

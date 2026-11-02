@@ -39,7 +39,7 @@ const isTimeout = (e) => e?.name === 'AbortError' || e?.name === 'TimeoutError';
  * @param {number} [timeout] request timeout in milliseconds
  * @returns {typeof fetch} wrapped fetch function
  */
-export function createFetchRetry(label, timeout) {
+export function createFetchRetry(label, timeout, log) {
   const fetchWithTimeout = async (input, init = {}) => {
     const signal = timeout ? timeoutSignal(timeout) : undefined;
 
@@ -60,12 +60,14 @@ export function createFetchRetry(label, timeout) {
       const retries = MOCHA_ENV ? 1 /* c8 ignore next */ : 2;
       if (error) {
         if ((error instanceof FetchError || isTimeout(error)) && attempt < retries) {
+          log.debug(`Received an error: ${error}, but will retry`);
           return true;
         }
         throw error;
       }
       if (!response.ok) {
         if (RETRYABLE_STATUS.has(response.status) && attempt < retries) {
+          log.debug(`Received a bad response status: ${response.status}, but will retry`);
           await response.text(); // drain before retrying
           return true;
         }

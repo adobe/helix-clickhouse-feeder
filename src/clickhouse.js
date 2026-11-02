@@ -12,6 +12,7 @@
 
 /* eslint-disable no-await-in-loop */
 
+import { gzipSync } from 'node:zlib';
 import { extractFields } from './extract-fields.js';
 import { createFetchRetry } from './utils.js';
 import { LOG_LEVEL_MAPPING } from './constants.js';
@@ -82,7 +83,7 @@ export class ClickHouseLogger {
     this._logGroup = logGroup;
     this._subsystem = subsystem || funcName.split('/')[1];
     this._queryId = queryId;
-    this._fetch = createFetchRetry('ClickHouse', timeout);
+    this._fetch = createFetchRetry('ClickHouse', timeout, log);
   }
 
   /**
@@ -140,14 +141,14 @@ export class ClickHouseLogger {
       url.searchParams.set('query_id', queryId);
     }
     const auth = Buffer.from(`${this._user}:${this._password}`).toString('base64');
-
-    const body = entries.map((entry) => JSON.stringify(entry)).join('\n');
+    const body = gzipSync(entries.map((entry) => JSON.stringify(entry)).join('\n'));
 
     log.debug('Sending entries to Clickhouse...');
     const resp = await this._fetch(url.href, {
       method: 'POST',
       headers: {
         'content-type': 'text/plain',
+        'content-encoding': 'gzip',
         authorization: `Basic ${auth}`,
       },
       body,
