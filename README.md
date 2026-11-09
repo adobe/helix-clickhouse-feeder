@@ -59,7 +59,7 @@ The feeder Lambda is invoked asynchronously by a CloudWatch Logs subscription fi
 | Setting | Value |
 |---|---|
 | Invocation type | Asynchronous (CloudWatch Logs subscription filter) |
-| On-failure destination | SQS: `arn:aws:sqs:us-east-1:${AWS_ACCOUNT_ID}:clickhouse-feeder-dlq` |
+| On-failure destination | SQS: `arn:aws:sqs:${AWS_REGION}:${AWS_ACCOUNT_ID}:clickhouse-feeder-dlq` |
 | Retry attempts | 2 (default) |
 | Maximum event age | 6 hours (default) |
 | Legacy DLQ setting | None (intentionally unused; the on-failure destination replaces it) |
