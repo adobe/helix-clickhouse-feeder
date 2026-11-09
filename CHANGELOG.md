@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.6.0...v1.7.0) (2026-11-09)
+
+
+### Features
+
+* use on-failure destination instead of sending manually to DLQ ([#71](https://github.com/adobe/helix-clickhouse-feeder/issues/71)) ([8cb56c3](https://github.com/adobe/helix-clickhouse-feeder/commit/8cb56c32c132785bae83ee50121a96d624fa315f))
+
 # [1.6.0](https://github.com/adobe/helix-clickhouse-feeder/compare/v1.5.0...v1.6.0) (2026-11-01)
 
 
