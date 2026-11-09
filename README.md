@@ -49,7 +49,44 @@ The service uses the following environment variables:
 | CLICKHOUSE_DATABASE | ClickHouse database name | No | helix_logs_production |
 | CLICKHOUSE_LOG_LEVEL | Log level | No | info |
 
-If delivery to ClickHouse fails, the service will send the unprocessed messages to the AWS SQS queue named `helix-clickhouse-feeder-dlq`.
+
+## Failure handling (async invocation)
+
+The feeder Lambda is invoked asynchronously by a CloudWatch Logs subscription filter. Failed invocations are retried, then routed to an SQS queue so log batches aren't silently lost.
+
+### Configuration
+
+| Setting | Value |
+|---|---|
+| Invocation type | Asynchronous (CloudWatch Logs subscription filter) |
+| On-failure destination | SQS: `arn:aws:sqs:us-east-1:${AWS_ACCOUNT_ID}:clickhouse-feeder-dlq` |
+| Retry attempts | 2 (default) |
+| Maximum event age | 6 hours (default) |
+| Legacy DLQ setting | None (intentionally unused; the on-failure destination replaces it) |
+
+### Setup steps
+
+1. **Create the SQS queue** (e.g. `clickhouse-feeder-dlq`). Set message retention to 14 days (default is 4).
+2. **Add the destination**: Lambda console > function > Configuration > Asynchronous invocation > Edit > Destinations > Add destination. Source: *Asynchronous invocation*, condition: *On failure*, target: the SQS queue.
+3. **Check IAM**: the function's execution role needs `sqs:SendMessage` on the queue. If the queue uses a KMS key, the role also needs `kms:GenerateDataKey` and `kms:Decrypt`.
+4. **Add CloudWatch alarms**:
+   - Queue: `ApproximateNumberOfMessagesVisible` > 0
+   - Function: `Errors` > 0 (catches failures before they reach the queue)
+   - Function: `AsyncEventsDropped` > 0 (events that couldn't be delivered anywhere)
+5. **Test it**: invoke the function asynchronously with a bad payload or force it to throw, then confirm a message lands in the queue after the retries (a few minutes):
+   ```
+   aws lambda invoke --function-name <FUNCTION_NAME> \
+     --invocation-type Event --payload '{"bad":"payload"}' \
+     --cli-binary-format raw-in-base64-out /dev/null
+   ```
+
+### Operating notes
+
+- **Message contents**: each queue message holds the original payload plus error details (the request context and response). Use these to diagnose and replay.
+- **Replay**: after fixing the cause, re-invoke the function with the original payload from each message, then delete the message. Document who owns this process.
+- **Idempotency**: retries and replays can deliver the same log events more than once, so the downstream write must tolerate duplicates.
+- **Payload limit**: async invocations are capped at 256 KB. Oversized batches fail before reaching the queue, so watch the `Errors` metric as well as queue depth.
+- **Throttling**: throttled async events are retried for up to the max event age (6 hours), then dropped. Don't set reserved concurrency too low.
 
 ## Development
 
