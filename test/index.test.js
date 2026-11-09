@@ -264,18 +264,6 @@ describe('Index Tests', () => {
   it('returns error when uncompressing fails', async () => {
     const payload = 'this is not compressed'.toString('base64');
 
-    nock('https://sqs.us-east-1.amazonaws.com')
-      .post('/')
-      .reply(200, `<?xml version="1.0"?>
-<SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
-  <SendMessageResult>
-    <MessageId>id</MessageId>
-  </SendMessageResult>
-  <ResponseMetadata>
-    <RequestId>id</RequestId>
-  </ResponseMetadata>
-</SendMessageResponse>
-`);
     await assert.rejects(
       async () => main(new Request('https://localhost/'), TEST_CONTEXT(payload)),
       /incorrect header check/,
@@ -348,18 +336,6 @@ describe('Index Tests', () => {
     nock.clickhouse()
       .reply(403, 'that went wrong');
 
-    nock('https://sqs.us-east-1.amazonaws.com')
-      .post('/')
-      .reply(200, `<?xml version="1.0"?>
-<SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
-  <SendMessageResult>
-    <MessageId>id</MessageId>
-  </SendMessageResult>
-  <ResponseMetadata>
-    <RequestId>id</RequestId>
-  </ResponseMetadata>
-</SendMessageResponse>
-`);
     await assert.rejects(
       async () => main(new Request('https://localhost/'), TEST_CONTEXT(payload)),
       /that went wrong/,
@@ -376,23 +352,6 @@ describe('Index Tests', () => {
         const lines = raw.trim().split('\n');
         assert.strictEqual(lines.length, expectedCount);
         return [200];
-      });
-    nock('https://sqs.us-east-1.amazonaws.com')
-      .post('/')
-      .reply(async (request) => {
-        const rejected = JSON.parse(new URLSearchParams(await request.text()).get('MessageBody'));
-        assert.strictEqual(rejected.length, 1);
-        assert.deepStrictEqual(rejected[0].message, 'This message has no known pattern and will be discarded\n');
-        return [200, `<?xml version="1.0"?>
-<SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
-  <SendMessageResult>
-    <MessageId>id</MessageId>
-  </SendMessageResult>
-  <ResponseMetadata>
-    <RequestId>id</RequestId>
-  </ResponseMetadata>
-</SendMessageResponse>
-`];
       });
 
     await assert.doesNotReject(
