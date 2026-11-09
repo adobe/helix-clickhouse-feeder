@@ -17,7 +17,6 @@ import secrets from '@adobe/helix-shared-secrets';
 import { helixStatus } from '@adobe/helix-status';
 import { ClickHouseLogger } from './clickhouse.js';
 import { resolve } from './alias.js';
-import { sendToDLQ } from './dlq.js';
 import { resetConnections } from './utils.js';
 
 const gunzip = util.promisify(zlib.gunzip);
@@ -51,7 +50,7 @@ async function getInput(request, context) {
  */
 async function run(request, context) {
   const {
-    invocation: { id, event },
+    invocation: { id },
     env: {
       CLICKHOUSE_HOST: clickhouseHost,
       CLICKHOUSE_USER: clickhouseUser,
@@ -107,19 +106,11 @@ async function run(request, context) {
     const { rejected, sent } = await clickhouseLogger.sendEntries(logEvents);
     log.info(`Sent ${sent} event(s) to ClickHouse, ${rejected.length} were rejected.`);
 
-    if (rejected.length) {
-      await sendToDLQ(context, rejected);
-    }
     return new Response('', { status: 202 });
   } catch (e) {
     log.error(e.message);
     log.debug('Unexpected problem', e);
 
-    try {
-      await sendToDLQ(context, input ?? { data: event.awslogs.data });
-    } catch (e2) {
-      log.error(`Unable to send to DLQ: ${e2.message}`);
-    }
     throw e;
     /* c8 ignore next 3 */
   } finally {
